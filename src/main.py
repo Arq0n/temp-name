@@ -2,7 +2,8 @@ import requests
 
 url = "https://www.gasbuddy.com/graphql"
 
-headers = {'Content-Type' : 'application/json'}
+headers = {'Content-Type' : 'application/json',
+           'user-agent' : 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'}
 
 payload = {'operationName' : 'LocationBySearchTerm',
            'variables' : {'fuel' : 1, 'maxAge' : 0, 'search' : '92057'},
