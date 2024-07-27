@@ -1,4 +1,5 @@
 import requests
+import json
 
 url = "https://www.gasbuddy.com/graphql"
 
@@ -7,8 +8,15 @@ headers = {'Content-Type' : 'application/json',
 
 payload = {'operationName' : 'LocationBySearchTerm',
            'variables' : {'fuel' : 1, 'maxAge' : 0, 'search' : '92057'},
-           'query' : "query LocationBySearchTerm($search: String) { locationBySearchTerm(search: $search) { trends { areaName country today todayLow } } }"
-           }
+        "query": "query LocationBySearchTerm($brandId: Int, $cursor: String, $maxAge: Int, $search: String) { locationBySearchTerm(search: $search) { stations(brandId: $brandId, cursor: $cursor, maxAge: $maxAge) { count cursor { next __typename } results { fuels id name prices { cash { nickname postedTime price __typename } credit { nickname postedTime price __typename } } } __typename } trends { areaName country today todayLow trend __typename } __typename }}"}
 response = requests.post(url=url, headers = headers, json = payload)
+data = response.content
+
+text = data.decode(encoding = 'utf-8')
+
+j = json.loads(text)
+
+with open("data.json", "w") as outfile:
+    json.dump(j, outfile)
 
 print(response.content)
