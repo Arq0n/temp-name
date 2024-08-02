@@ -1,0 +1,5 @@
+/bin
+/env
+/lib
+*.json
+pyenv.cfg
