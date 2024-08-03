@@ -1,9 +1,9 @@
-Set up venv in folder containing src: \n
-python3 -m venv \n
+Set up venv in folder containing src:\
+python3 -m venv\
 source env/bin/activate
 
-Install requests: \n
+Install requests:\
 pip install requests
 
-Install geocoder: \n
+Install geocoder:\
 pip install geocoder
