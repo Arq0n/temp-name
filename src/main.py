@@ -24,7 +24,6 @@ with open("data.json", "w") as outfile:
 
 
 
-
 city = input("Enter a city; if it contains a spacae, replace with hyphens: ")
 zipcode = input("Enter a zipcode: ")
 
