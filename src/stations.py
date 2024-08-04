@@ -13,7 +13,7 @@ class GasStation:
     stations = dict()
     
     def __init__(self, name: str = None, reg: Price = Price(0,0), mid: Price = Price(0,0),
-                 high: Price = Price(0,0) , dis: Price = Price(0,0), addr: str = None, zipc: str = None):
+                 high: Price = Price(0,0) , dis: Price = Price(0,0), addr: str = None, zipc: str = None, region: str = None):
         if (addr is None):
             raise ValueError("Address is required for each gas station")
         elif (zipc is None):
@@ -21,6 +21,7 @@ class GasStation:
         self._name = name
         self._address = addr
         self._zip_code = zipc
+        self._region = region
         self._regular = reg
         self._midgrade = mid
         self._premium = high
@@ -52,7 +53,8 @@ class GasStation:
             cls(
                 name = station['name'],
                 addr = (station['address']['line1'] + ' ' + station['address']['line2']).strip(),
-                zipc = station['address']['postalCode'],
+                zipc = station['address']['postalCode'], 
+                region = station['address']['region'] + ", " + station['address']['country'],
                 **_get_prices(station))
     @staticmethod
     def clear():
