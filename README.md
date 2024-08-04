@@ -7,3 +7,5 @@ pip install requests
 
 Install geocoder:\
 pip install geocoder
+
+If stations.py raises any errors, rerun main.py
