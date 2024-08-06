@@ -1,5 +1,6 @@
 import requests
 import json
+from directions import Route
 
 """
 OSRM uses longitude, latitude in the url 
@@ -40,3 +41,16 @@ duration is in seconds and distance is in meters
 """
 with open("routing.json", "w") as outfile:
     json.dump(response, outfile)
+
+"""
+Test coords
+-117.840161,33.642947
+-117.701242491603,33.654875498759
+"""
+
+d = Route()
+d.get_stats_from_json("routing.json")
+d.switch_to_imperial()
+print(d)
+d.switch_to_metric()
+print(d)
