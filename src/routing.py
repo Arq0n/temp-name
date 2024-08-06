@@ -1,13 +1,22 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
+import googlemaps
+
+"""
+Geolocate from google maps
+"""
+load_dotenv()
+gmaps = googlemaps.Client(key = os.getenv("GOOGLE_API_KEY"))
+loc = gmaps.geolocate()
 
 """
 OSRM uses longitude, latitude in the url 
 -117.840161,33.642947 is UCI for example
 could've confused longitude and latitude :/
 """
-
-start_long_lat = input("longitude, latitude: ")
+start_long_lat = loc["location"]["lng"] + loc["location"]["lat"]
 dest_long_lat = input("longitude, latitude: ")
 
 url = f"https://router.project-osrm.org/route/v1/driving/{start_long_lat};{dest_long_lat}"
@@ -25,7 +34,7 @@ def send_request(url: str, headers: str, payload: str = None) -> dict[str: str]:
         if(payload != None):
             response = requests.post(url = url, headers = headers, json = payload)
         else:
-            response = requests.post(url=url, headers = headers)
+            response = requests.post(url = url, headers = headers)
         text = response.content.decode(encoding = 'utf-8')
         json_response = json.loads(text)
         return json_response
