@@ -1,3 +1,4 @@
 /env*
 *.json
 /src/__pycache__
+.env
