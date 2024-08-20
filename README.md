@@ -2,10 +2,11 @@
 
 
 ## Set up venv in folder containing src:
-python3 -m venv\
+python3 -m venv env\
 source env/bin/activate
 
 ## Install requests:
 pip install requests
 
-### If stations.py raises any errors, rerun main.py
+## Install geopy:
+pip install geopy
