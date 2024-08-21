@@ -11,6 +11,7 @@ headers = {'Content-Type' : 'application/json', 'user-agent' : 'Mozilla/5.0 (X11
 
 current_location = input("Enter your current address: ")
 mpg = float(input("Enter your car's mpg: "))
+gallons_to_full = float(input("Enter approx. gallons needed for a full tank: "))
 geolocator = Nominatim(user_agent="testing")
 curr_loc = geolocator.geocode(current_location)
 coords = f'{curr_loc.latitude}, {curr_loc.longitude}'
@@ -42,11 +43,13 @@ for station in GasStation.sort_by_cheapest(GasStation.REGULAR):
     d.get_stats_from_json(route_json)
     d.switch_to_imperial()
     price_to_get_there = d._distance * float(station._regular.cash) / mpg
-    print(price_to_get_there)
-    gas_station_distances[station] = d
+    full_cost = price_to_get_there + gallons_to_full * float(station._regular.cash)
+    print(f'{station.__str__()} price to get there: {price_to_get_there}; full cost: {full_cost}')
+    gas_station_distances[station.__str__()] = full_cost
 
-
-
+gas_station_distances = dict(sorted(gas_station_distances.items(), key=lambda item: item[1]))
+for station, cost in gas_station_distances.items():
+    print(f'{station} total cost: {cost}')
 
 response = requests.post(url=url, headers=headers, json=curr_query.make_location_by_zipcode_query())
 text = response.content.decode(encoding = 'utf-8')
