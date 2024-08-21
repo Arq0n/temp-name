@@ -10,9 +10,11 @@ url = "https://www.gasbuddy.com/graphql"
 headers = {'Content-Type' : 'application/json', 'user-agent' : 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'}
 
 current_location = input("Enter your current address: ")
+mpg = float(input("Enter your car's mpg: "))
 geolocator = Nominatim(user_agent="testing")
 curr_loc = geolocator.geocode(current_location)
 coords = f'{curr_loc.latitude}, {curr_loc.longitude}'
+start_long_lat = f'{curr_loc.longitude},{curr_loc.latitude}'
 location = geolocator.reverse(coords)
 location_info = location.raw['address']
 
@@ -26,10 +28,26 @@ curr_query = Query(city, zipcode, region_code, country_code)
 response = requests.post(url=url, headers=headers, json=curr_query.make_location_by_area_query())
 text = response.content.decode(encoding = 'utf-8')
 area_json = json.loads(text)
+GasStation.get_stations_from_json(area_json['data']['locationByArea']['stations'])
+gas_station_distances = dict()
+
+for station in GasStation.sort_by_cheapest(GasStation.REGULAR):
+    station_lat, station_long = station._coords
+    dest_long_lat = f'{station_long},{station_lat}'
+    osrm_url = f"https://router.project-osrm.org/route/v1/driving/{start_long_lat};{dest_long_lat}"
+    response = requests.post(url=osrm_url, headers=headers, json=None)
+    text = response.content.decode(encoding = 'utf-8')
+    route_json = json.loads(text)
+    d = Route()
+    d.get_stats_from_json(route_json)
+    d.switch_to_imperial()
+    price_to_get_there = d._distance * float(station._regular.cash) / mpg
+    print(price_to_get_there)
+    gas_station_distances[station] = d
+
+
 
 
 response = requests.post(url=url, headers=headers, json=curr_query.make_location_by_zipcode_query())
 text = response.content.decode(encoding = 'utf-8')
 zipcode_json = json.loads(text)
-
-print(zipcode_json)
