@@ -7,19 +7,16 @@ class Route:
         self._distance = distance
         self._time = time
 
-    def get_stats_from_json(self, file: 'path of json file') -> None:
-        "Store stats from json file into the class"
-        j = None
-        with open(file, "r") as infile:
-            j = json.load(infile)
-        if j is not None:
-            stats = j["routes"][0]
+    def get_stats_from_json(self, json_text: 'entire json response') -> None:
+        "Store stats from parsed json into the class"
+        try:
+            stats = json_text["routes"][0]
             self._distance = float(stats["distance"])
             self._convert_to_km()
             self._time = float(stats["duration"])
             self._standardize_time()
-        else:
-            raise ValueError("Unable to open json file")
+        except KeyError:
+            raise ValueError("Missing content")
     
     def switch_to_imperial(self) -> None:
         "Convert units into imperial units"
@@ -58,5 +55,5 @@ class Route:
             time_in_string += f"{time[2]} seconds "
         self._time = time_in_string.strip()
     
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return f"Distance is approx {self._distance} {"km" if self._units == "metric" else "mi"} in about {self._time}."

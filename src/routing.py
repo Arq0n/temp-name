@@ -49,7 +49,7 @@ Test coords
 """
 
 d = Route()
-d.get_stats_from_json("routing.json")
+d.get_stats_from_json(response)
 d.switch_to_imperial()
 print(d)
 d.switch_to_metric()
