@@ -6,51 +6,83 @@ from query import Query
 from geopy.geocoders import Nominatim
 
 
-url = "https://www.gasbuddy.com/graphql"
-headers = {'Content-Type' : 'application/json', 'user-agent' : 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'}
+URL = "https://www.gasbuddy.com/graphql"
+HEADERS = {'Content-Type' : 'application/json', 'user-agent' : 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'}
 
-current_location = input("Enter your current address: ")
-mpg = float(input("Enter your car's mpg: "))
-gallons_to_full = float(input("Enter approx. gallons needed for a full tank: "))
-geolocator = Nominatim(user_agent="testing")
-curr_loc = geolocator.geocode(current_location)
-coords = f'{curr_loc.latitude}, {curr_loc.longitude}'
-start_long_lat = f'{curr_loc.longitude},{curr_loc.latitude}'
-location = geolocator.reverse(coords)
-location_info = location.raw['address']
 
-city = location_info['city'].lower().replace(' ', '-')
-zipcode = location_info['postcode']
-country_code = location_info['ISO3166-2-lvl4'].split('-')[0]
-region_code = location_info['ISO3166-2-lvl4'].split('-')[1]
+class Program:
+    def __init__(self, curr_loc: str, mpg: str, gallons_to_full: str): 
+        self._current_location = curr_loc
+        self._mpg = mpg
+        self._gallons_to_full = gallons_to_full
+        self._start_long_lat = None
+    
+    def run(self) -> None:
+        """
+        Runs the class and prints a list of cheapest gas station depending
+        on the current location of the user and cost of getting to the 
+        station
+        """
+        location_info = self._get_location_info()
+        city = location_info['city'].lower().replace(' ', '-')
+        zipcode = location_info['postcode']
+        country_code = location_info['ISO3166-2-lvl4'].split('-')[0]
+        region_code = location_info['ISO3166-2-lvl4'].split('-')[1]
 
-curr_query = Query(city, zipcode, region_code, country_code)
+        curr_query = Query(city, zipcode, region_code, country_code)
 
-response = requests.post(url=url, headers=headers, json=curr_query.make_location_by_area_query())
-text = response.content.decode(encoding = 'utf-8')
-area_json = json.loads(text)
-GasStation.get_stations_from_json(area_json['data']['locationByArea']['stations'])
-gas_station_distances = dict()
+        response = requests.post(url=URL, headers=HEADERS, json=curr_query.make_location_by_area_query())
+        text = response.content.decode(encoding = 'utf-8')
+        area_json = json.loads(text)
+        GasStation.get_stations_from_json(area_json['data']['locationByArea']['stations'])
+        gas_station_distances = dict()
 
-for station in GasStation.sort_by_cheapest(GasStation.REGULAR):
-    station_lat, station_long = station._coords
-    dest_long_lat = f'{station_long},{station_lat}'
-    osrm_url = f"https://router.project-osrm.org/route/v1/driving/{start_long_lat};{dest_long_lat}"
-    response = requests.post(url=osrm_url, headers=headers, json=None)
-    text = response.content.decode(encoding = 'utf-8')
-    route_json = json.loads(text)
-    d = Route()
-    d.get_stats_from_json(route_json)
-    d.switch_to_imperial()
-    price_to_get_there = d._distance * float(station._regular.cash) / mpg
-    full_cost = price_to_get_there + gallons_to_full * float(station._regular.cash)
-    print(f'{station.__str__()} price to get there: {price_to_get_there}; full cost: {full_cost}')
-    gas_station_distances[station.__str__()] = full_cost
+        for station in GasStation.sort_by_cheapest(GasStation.REGULAR):
+            station_lat, station_long = station._coords
+            dest_long_lat = f'{station_long},{station_lat}'
 
-gas_station_distances = dict(sorted(gas_station_distances.items(), key=lambda item: item[1]))
-for station, cost in gas_station_distances.items():
-    print(f'{station} total cost: {cost}')
+            osrm_url = f"https://router.project-osrm.org/route/v1/driving/{self._start_long_lat};{dest_long_lat}"
+            response = requests.post(url=osrm_url, headers=HEADERS, json=None)
+            text = response.content.decode(encoding = 'utf-8')
+            route_json = json.loads(text)
 
-response = requests.post(url=url, headers=headers, json=curr_query.make_location_by_zipcode_query())
-text = response.content.decode(encoding = 'utf-8')
-zipcode_json = json.loads(text)
+            d = Route()
+            d.get_stats_from_json(route_json)
+            d.switch_to_imperial()
+
+            price_to_get_there = d._distance * float(station._regular.cash) / self._mpg
+            full_cost = price_to_get_there + self._gallons_to_full * float(station._regular.cash)
+            print(f'{station.__str__()} price to get there: {price_to_get_there}; full cost: {full_cost}')
+
+            gas_station_distances[station.__str__()] = full_cost
+
+        gas_station_distances = dict(sorted(gas_station_distances.items(), key=lambda item: item[1]))
+
+        for station, cost in gas_station_distances.items():
+            print(f'{station} total cost: {cost}')
+
+        response = requests.post(url=URL, headers=HEADERS, json=curr_query.make_location_by_zipcode_query())
+        text = response.content.decode(encoding = 'utf-8')
+        zipcode_json = json.loads(text)
+
+    def _get_location_info(self) -> dict[str: str]:
+        """
+        Geocodes the user's current position
+        Returns a dictionary of the raw information (address, coordinates, etc.) regarding 
+        the user's location
+        """
+        geolocator = Nominatim(user_agent="testing")
+        curr_loc = geolocator.geocode(self._current_location)
+        coords = f'{curr_loc.latitude}, {curr_loc.longitude}'
+        self._start_long_lat = f'{curr_loc.longitude},{curr_loc.latitude}'
+        location = geolocator.reverse(coords)
+        location_info = location.raw['address']
+        return location_info
+
+
+if __name__ == '__main__':
+    current_location = input("Enter your current address: ")
+    mpg = float(input("Enter your car's mpg: "))
+    gallons_to_full = float(input("Enter approx. gallons needed for a full tank: "))
+    p = Program(current_location, mpg, gallons_to_full)
+    p.run()
