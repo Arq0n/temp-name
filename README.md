@@ -1,7 +1,7 @@
 # **Readme.md:**
 
 
-## Set up venv in folder containing src:
+## Set up venv in folder containing src (macOS):
 python3 -m venv env\
 source env/bin/activate
 
