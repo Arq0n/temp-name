@@ -30,11 +30,15 @@ class Program:
         region_code = location_info['ISO3166-2-lvl4'].split('-')[1]
 
         curr_query = Query(city, zipcode, region_code, country_code)
+        
+        try:
+            response = requests.post(url=URL, headers=HEADERS, json=curr_query.make_location_by_area_query())
+            text = response.content.decode(encoding = 'utf-8')
+            area_json = json.loads(text)
+        except Exception as e:
+            print(e.args)
+            print(response, text, area_json, end='\n')
 
-        response = requests.post(url=URL, headers=HEADERS, json=curr_query.make_location_by_area_query())
-        text = response.content.decode(encoding = 'utf-8')
-        print(text)
-        area_json = json.loads(text)
         GasStation.get_stations_from_json(area_json['data']['locationByArea']['stations'])
         gas_station_distances = dict()
 
@@ -56,7 +60,7 @@ class Program:
             print(f'{station.__str__()} price to get there: {price_to_get_there}; full cost: {full_cost}')
 
             gas_station_distances[station.__str__()] = full_cost
-
+        print('\n\n')
         gas_station_distances = dict(sorted(gas_station_distances.items(), key=lambda item: item[1]))
 
         for station, cost in gas_station_distances.items():
