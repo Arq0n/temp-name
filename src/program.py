@@ -30,11 +30,9 @@ class Program:
         region_code = location_info['ISO3166-2-lvl4'].split('-')[1]
 
         curr_query = Query(city, zipcode, region_code, country_code)
-        
+
         try:
-            response = requests.post(url=URL, headers=HEADERS, json=curr_query.make_location_by_area_query())
-            text = response.content.decode(encoding = 'utf-8')
-            area_json = json.loads(text)
+            area_json = json.loads(self._handle_request(URL, HEADERS, curr_query.make_location_by_area_query()))
         except Exception as e:
             print(e.args)
             print(response, text, area_json, end='\n')
@@ -47,9 +45,7 @@ class Program:
             dest_long_lat = f'{station_long},{station_lat}'
 
             osrm_url = f"https://router.project-osrm.org/route/v1/driving/{self._start_long_lat};{dest_long_lat}"
-            response = requests.post(url=osrm_url, headers=HEADERS, json=None)
-            text = response.content.decode(encoding = 'utf-8')
-            route_json = json.loads(text)
+            route_json = json.loads(self._handle_request(osrm_url, HEADERS))
 
             d = Route()
             d.get_stats_from_json(route_json)
@@ -83,6 +79,15 @@ class Program:
         location = geolocator.reverse(coords)
         location_info = location.raw['address']
         return location_info
+    
+    def _handle_request(self, url: str, headers: dict[str: str], json: dict[str: str] = None) -> str: 
+        """
+        Sends a post request to the provided url with the given headers and json
+        Json parameter sis defaulted to none 
+        Returns the decoded response string
+        """
+        response = requests.post(url=url, headers=headers, json=json)
+        return response.content.decode(encoding = 'utf-8')
 
 
 if __name__ == '__main__':
