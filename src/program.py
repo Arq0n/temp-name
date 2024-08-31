@@ -1,3 +1,4 @@
+import sys
 import requests
 import json
 from stations import GasStation
@@ -28,10 +29,12 @@ class Program:
         curr_query = Query(city, zipcode, region_code, country_code)
 
         try:
-            area_json = json.loads(self._handle_request(URL, HEADERS, curr_query.make_location_by_area_query()))
+            response = self._handle_request(URL, HEADERS, curr_query.make_location_by_area_query())
+            area_json = json.loads(response)
         except Exception as e:
+            print(response)
             print(e.args)
-            print(area_json)
+            sys.exit(1)
 
         GasStation.get_stations_from_json(area_json['data']['locationByArea']['stations'])
         gas_station_distances = dict()
