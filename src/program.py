@@ -24,36 +24,30 @@ class Program:
         station
         """
         location_info = self._get_location_info()
-        city = location_info['city'].lower().replace(' ', '-')
-        zipcode = location_info['postcode']
-        country_code = location_info['ISO3166-2-lvl4'].split('-')[0]
-        region_code = location_info['ISO3166-2-lvl4'].split('-')[1]
-
+        city, zipcode, region_code, country_code = self._parse_location_info(location_info)
         curr_query = Query(city, zipcode, region_code, country_code)
 
         try:
             area_json = json.loads(self._handle_request(URL, HEADERS, curr_query.make_location_by_area_query()))
         except Exception as e:
             print(e.args)
-            print(response, text, area_json, end='\n')
+            print(area_json)
 
         GasStation.get_stations_from_json(area_json['data']['locationByArea']['stations'])
         gas_station_distances = dict()
 
         for station in GasStation.sort_by_cheapest(GasStation.REGULAR):
             price_to_get_there, full_cost = self._calculate_costs(station, GasStation.REGULAR)
-            print(f'{station.__str__()} price to get there: {price_to_get_there}; full cost: {full_cost}')
+            print(f'{station.__str__()} price to get there: {price_to_get_there}; full cost for cash: {full_cost}')
             gas_station_distances[station.__str__()] = full_cost
 
         print('\n\n')
         gas_station_distances = dict(sorted(gas_station_distances.items(), key=lambda item: item[1]))
 
         for station, cost in gas_station_distances.items():
-            print(f'{station} total cost: {cost}')
+            print(f'{station} total cost for cash: {cost}')
 
-        response = requests.post(url=URL, headers=HEADERS, json=curr_query.make_location_by_zipcode_query())
-        text = response.content.decode(encoding = 'utf-8')
-        zipcode_json = json.loads(text)
+        #zipcode_json = json.loads(self._handle_request(URL, HEADERS, curr_query.make_location_by_zipcode_query()))
 
     def _get_location_info(self) -> dict[str: str]:
         """
@@ -69,17 +63,28 @@ class Program:
         location_info = location.raw['address']
         return location_info
     
+    def _parse_location_info(self, loc_info: dict[str: str]) -> tuple[str, str, str, str]:
+        """
+        Parse the given address info json stored as a dictionary to return the city, 
+        zipcode, region code (state), and country code in a tuple
+        Example of a returned value: (Irvine, 92697, CA, US)
+        """
+        city = loc_info['city' if 'city' in loc_info.keys() else 'suburb'].lower().replace(' ', '-')
+        zipcode = loc_info['postcode']
+        country_code = loc_info['ISO3166-2-lvl4'].split('-')[0]
+        region_code = loc_info['ISO3166-2-lvl4'].split('-')[1]
+        return (city, zipcode, region_code, country_code)
+    
     def _handle_request(self, url: str, headers: dict[str: str], json: dict[str: str] = None) -> str: 
         """
         Sends a post request to the provided url with the given headers and json
-        Json parameter sis defaulted to none 
+        Json parameter or payload is defaulted to none if nothing is provided
         Returns the decoded response string
         """
         response = requests.post(url=url, headers=headers, json=json)
         return response.content.decode(encoding = 'utf-8')
 
-    def _calculate_costs(self, station: GasStation, gas_type: GasStation.DIESEL | GasStation.REGULAR | \
-                            GasStation.MIDGRADE | GasStation.PREMIUM) -> tuple[float, float]:
+    def _calculate_costs(self, station: GasStation, gas_type: int) -> tuple[float, float]:
         """
         Calculate the costs to get to the station provided
         Returns the price to get there and the full cost to fill the tank in a tuple
