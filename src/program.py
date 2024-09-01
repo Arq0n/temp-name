@@ -31,12 +31,15 @@ class Program:
         try:
             response = self._handle_request(URL, HEADERS, curr_query.make_location_by_area_query())
             area_json = json.loads(response)
+            response = self._handle_request(URL, HEADERS, curr_query.make_location_by_zipcode_query())
+            zipcode_json = json.loads(response)
         except Exception as e:
             print(response)
             print(e.args)
             sys.exit(1)
 
         GasStation.get_stations_from_json(area_json['data']['locationByArea']['stations'])
+        GasStation.get_stations_from_json(zipcode_json['data']['locationBySearchTerm']['stations'])
         gas_station_distances = dict()
 
         for station in GasStation.sort_by_cheapest(GasStation.REGULAR):
@@ -49,8 +52,6 @@ class Program:
 
         for station, cost in gas_station_distances.items():
             print(f'{station} total cost for cash: {cost}')
-
-        #zipcode_json = json.loads(self._handle_request(URL, HEADERS, curr_query.make_location_by_zipcode_query()))
 
     def _get_location_info(self) -> dict[str: str]:
         """
